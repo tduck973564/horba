@@ -2,10 +2,11 @@ use super::token_type::TokenType;
 use std::any::Any;
 use std::fmt::{self, Display};
 
+#[derive(Clone)]
 pub struct Token {
-    token: TokenType,
-    lexeme: String,
-    line: u32,
+    pub(crate) token: TokenType,
+    pub(crate) lexeme: String,
+    pub(crate) line: u32,
 }
 
 impl Token {

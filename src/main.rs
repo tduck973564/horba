@@ -1,4 +1,5 @@
-use rustyline;
+#![feature(unsized_fn_params)]
+
 use std::env::args;
 use std::error::Error;
 use std::fs;
@@ -14,6 +15,7 @@ fn main() {
         x if x == 2 => run_file(&args[1]).expect("Could not run file"),
         _ => run_prompt(),
     };
+    parser::ast_printer::ast_test();
 }
 
 fn run_file(path: &str) -> Result<(), Box<dyn Error>> {
@@ -24,10 +26,12 @@ fn run_file(path: &str) -> Result<(), Box<dyn Error>> {
 
 fn run_prompt() {
     let mut rl = rustyline::Editor::<()>::new();
-    let readline = rl.readline(">> ");
-    match readline {
-        Ok(line) => run(line),
-        Err(_) => println!(),
+    loop {
+        let readline = rl.readline(">> ");
+        match readline {
+            Ok(line) => run(line),
+            Err(_) => println!(),
+        }
     }
 }
 
