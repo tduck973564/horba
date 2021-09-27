@@ -21,7 +21,7 @@ pub class Hello {
         println(str)
     }
     
-    trait fn nice(); // Inheritors must define this, shared behaviour marker
+    trait fn nice() // Inheritors must define this, shared behaviour marker
 }
 
 class WhenThe inherits Hello {
