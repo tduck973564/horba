@@ -11,6 +11,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: u32,
+    column: u32,
 }
 
 fn is_ident_char(c: char) -> bool {
@@ -48,6 +49,7 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
+            column: 1,
         }
     }
 
@@ -112,7 +114,6 @@ impl Scanner {
                 }
                 '*' => {
                     self.advance();
-                    println!("Supposed to be block comment");
                     self.block_comment();
                 }
                 _ => {
@@ -121,12 +122,16 @@ impl Scanner {
                 }
             },
             '"' => self.string(),
-            '\n' => self.line += 1,
+            '\n' => self.new_line(),
             x if x.is_whitespace() => (),
             x if x.is_digit(10) => self.number(),
             x if is_ident_char(x) => self.identifier(),
             x => {
-                error::error(self.line, &format!("Unexpected character: {}", x));
+                error::error(
+                    self.line,
+                    self.column,
+                    &format!("Unexpected character: {}", x),
+                );
             }
         }
     }
@@ -134,13 +139,13 @@ impl Scanner {
     fn string(&mut self) {
         while self.peek(0) != '"' && !self.is_at_end() {
             if self.peek(0) == '\n' {
-                self.line += 1;
+                self.new_line()
             }
             self.advance();
         }
 
         if self.is_at_end() {
-            error::error(self.line, "Unterminated string.");
+            error::error(self.line, self.column, "Unterminated string.");
             return;
         }
 
@@ -184,7 +189,7 @@ impl Scanner {
         while !(self.peek(0) == '*' && self.peek(1) == '/' && self.is_at_end()) {
             println!("{} {}", self.peek(0), self.peek(1));
             if self.peek(0) == '\n' {
-                self.line += 1;
+                self.new_line();
             }
             self.advance();
         }
@@ -222,5 +227,9 @@ impl Scanner {
         }
         self.current += 1;
         true
+    }
+    fn new_line(&mut self) {
+        self.line += 1;
+        self.column = 1;
     }
 }
