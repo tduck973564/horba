@@ -6,39 +6,39 @@ use crate::scanner::token_type::TokenType;
 struct AstPrinter;
 
 impl expr::Visitor<String> for AstPrinter {
-    fn visit_grouping_expr(&self, expr: Box<Grouping<String>>) -> String {
+    fn visit_grouping(&self, expr: &Grouping) -> String {
         self.parenthesize("group", vec![expr.expression])
     }
 
-    fn visit_binary_expr(&self, expr: Box<Binary<String>>) -> String {
+    fn visit_binary(&self, expr: &Binary) -> String {
         self.parenthesize(&expr.operator.lexeme, vec![expr.left, expr.right])
     }
 
-    fn visit_literal_expr(&self, expr: Box<Literal>) -> String {
-        match *expr {
+    fn visit_literal(&self, expr: &Literal) -> String {
+        match expr {
             Literal::Number(x) => x.to_string(),
-            Literal::String(x) => x,
+            Literal::String(x) => x.to_string(),
             Literal::True => "true".to_string(),
             Literal::False => "false".to_string(),
             Literal::Null => "null".to_string(),
         }
     }
 
-    fn visit_unary_expr(&self, expr: Box<Unary<String>>) -> String {
+    fn visit_unary(&self, expr: &Unary) -> String {
         self.parenthesize(&expr.operator.lexeme, vec![expr.expression])
     }
 }
 
 impl AstPrinter {
-    pub fn print(&self, expr: Box<dyn Expr<String>>) -> String {
+    pub fn print(&self, mut expr: Expr) -> String {
         expr.accept(Box::new(*self))
     }
-    fn parenthesize(&self, name: &str, exprs: Vec<Box<dyn Expr<String>>>) -> String {
+    fn parenthesize(&self, name: &str, exprs: Vec<Box<Expr>>) -> String {
         let mut string = String::new();
 
         string.push('(');
         string.push_str(name);
-        for expr in exprs {
+        for mut expr in exprs {
             let visitor_string = expr.accept(Box::new(*self));
             string.push(' ');
             string.push_str(&visitor_string);
@@ -49,23 +49,23 @@ impl AstPrinter {
 }
 
 pub fn ast_test() {
-    let expr = Binary {
-        left: Box::new(Unary {
+    let expr = Expr::Binary(Binary {
+        left: Box::new(Expr::Unary(Unary {
             operator: Token {
                 token: TokenType::Minus,
                 lexeme: "-".to_string(),
                 line: 1,
             },
-            expression: Box::new(Literal::Number(123.0)),
-        }),
+            expression: Box::new(Expr::Literal(Literal::Number(123.0))),
+        })),
         operator: Token {
             token: TokenType::Star,
             lexeme: "*".to_string(),
             line: 1,
         },
-        right: Box::new(Grouping {
-            expression: Box::new(Literal::Number(45.67)),
-        }),
-    };
-    println!("{}", AstPrinter {}.print(Box::new(expr)));
+        right: Box::new(Expr::Grouping(Grouping {
+            expression: Box::new(Expr::Literal(Literal::Number(45.67))),
+        })),
+    });
+    println!("{}", AstPrinter {}.print(expr));
 }

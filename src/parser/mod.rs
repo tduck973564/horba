@@ -16,27 +16,27 @@ impl Parser {
         Parser { tokens, current: 0 }
     }
 
-    fn expression(&mut self) -> Box<dyn Expr<T>> {
+    fn expression(&mut self) -> Expr {
         self.equality()
     }
 
-    fn equality(&mut self) -> Box<dyn Expr<T>> {
+    fn equality(&mut self) -> Expr {
         let mut expr = self.comparison();
 
         while self.cmp(&[TokenType::BangEqual, TokenType::EqualEqual]) {
             let operator = self.peek(-1);
             let right = self.comparison();
-            expr = Box::new(Binary {
-                left: expr,
+            expr = Expr::Binary(Binary {
+                left: Box::new(expr),
                 operator: (*operator).clone(),
-                right,
+                right: Box::new(right),
             });
         }
 
         expr
     }
 
-    fn comparison(&mut self) -> Box<dyn Expr<T>> {
+    fn comparison(&mut self) -> Expr {
         let mut expr = self.term();
 
         while self.cmp(&[
@@ -47,72 +47,74 @@ impl Parser {
         ]) {
             let operator = self.peek(-1);
             let right = self.term();
-            expr = Box::new(Binary {
-                left: expr,
+            expr = Expr::Binary(Binary {
+                left: Box::new(expr),
                 operator: operator.clone(),
-                right,
-            })
+                right: Box::new(right),
+            });
         }
 
         expr
     }
 
-    fn term(&mut self) -> Box<dyn Expr<T>> {
+    fn term(&mut self) -> Expr {
         let mut expr = self.factor();
 
         while self.cmp(&[TokenType::Minus, TokenType::Plus]) {
             let operator = self.peek(-1);
             let right = self.factor();
-            expr = Box::new(Binary {
-                left: expr,
+            expr = Expr::Binary(Binary {
+                left: Box::new(expr),
                 operator: operator.clone(),
-                right,
+                right: Box::new(right),
             })
         }
 
         expr
     }
 
-    fn factor(&mut self) -> Box<dyn Expr<T>> {
+    fn factor(&mut self) -> Expr {
         let mut expr = self.unary();
 
         while self.cmp(&[TokenType::Slash, TokenType::Star]) {
             let operator = self.peek(-1);
             let right = self.unary();
-            expr = Box::new(Binary {
-                left: expr,
+            expr = Expr::Binary(Binary {
+                left: Box::new(expr),
                 operator: operator.clone(),
-                right,
+                right: Box::new(right),
             })
         }
 
         expr
     }
 
-    fn unary(&mut self) -> Box<dyn Expr<T>> {
+    fn unary(&mut self) -> Expr {
         if self.cmp(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.peek(-1);
             let expression = self.unary();
-            return Box::new(Unary {
+            return Expr::Unary(Unary {
                 operator: operator.clone(),
-                expression,
+                expression: Box::new(expression),
             });
         }
 
         self.primary()
     }
 
-    fn primary(&mut self) -> Box<dyn Expr<T>> {
+    fn primary(&mut self) -> Expr {
         match &self.peek(0).token {
-            TokenType::False => Box::new(Literal::False),
-            TokenType::True => Box::new(Literal::True),
-            TokenType::Null => Box::new(Literal::Null),
-            TokenType::Number(x) => Box::new(Literal::Number(*x)),
-            TokenType::String(x) => Box::new(Literal::String(x.clone())),
+            TokenType::False => Expr::Literal(Literal::False),
+            TokenType::True => Expr::Literal(Literal::True),
+            TokenType::Null => Expr::Literal(Literal::Null),
+            TokenType::Number(x) => Expr::Literal(Literal::Number(*x)),
+            TokenType::String(x) => Expr::Literal(Literal::String(x.clone())),
             TokenType::LeftParen => {
                 let expr = self.expression();
                 self.consume(TokenType::RightParen, "Expected ')' after expression.");
-                Box::new(Grouping { expression: expr })
+                Expr::Grouping(Grouping {
+                    expression: Box::new(expr),
+                })
             }
             _ => panic!("Panicked at primary, something is wrong with the operator precedence"),
         }

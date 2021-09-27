@@ -1,18 +1,35 @@
 use crate::scanner::token::Token;
 
 pub(crate) trait Visitor<T> {
-    fn visit_grouping_expr(&self, expr: Box<Grouping<T>>) -> T;
-    fn visit_binary_expr(&self, expr: Box<Binary<T>>) -> T;
-    fn visit_literal_expr(&self, expr: Box<Literal>) -> T;
-    fn visit_unary_expr(&self, expr: Box<Unary<T>>) -> T;
+    fn visit(&mut self, expr: &Expr) -> T {
+        match expr {
+            Expr::Grouping(x) => self.visit_grouping(x),
+            Expr::Binary(x) => self.visit_binary(x),
+            Expr::Literal(x) => self.visit_literal(x),
+            Expr::Unary(x) => self.visit_unary(x),
+        }
+    }
+    fn visit_grouping(&self, grouping: &Grouping) -> T;
+    fn visit_binary(&self, binary: &Binary) -> T;
+    fn visit_literal(&self, literal: &Literal) -> T;
+    fn visit_unary(&self, unary: &Unary) -> T;
 }
 
-pub(crate) trait Expr<T> {
-    fn accept(self, visitor: Box<dyn Visitor<T>>) -> T;
+pub(crate) enum Expr {
+    Grouping(Grouping),
+    Binary(Binary),
+    Literal(Literal),
+    Unary(Unary),
+}
+
+impl Expr {
+    pub(crate) fn accept<T>(&mut self, mut visitor: Box<dyn Visitor<T>>) -> T {
+        visitor.visit(self)
+    }
 }
 
 // Expressions
-pub enum Literal {
+pub(crate) enum Literal {
     Number(f64),
     String(String),
     True,
@@ -20,43 +37,19 @@ pub enum Literal {
     Null,
 }
 
-impl<T> Expr<T> for Literal {
-    fn accept(self, visitor: Box<dyn Visitor<T>>) -> T {
-        visitor.visit_literal_expr(Box::new(self))
-    }
+pub struct Grouping {
+    pub(crate) expression: Box<Expr>,
 }
 
-pub struct Grouping<T> {
-    pub(crate) expression: Box<dyn Expr<T>>,
-}
-
-impl<T> Expr<T> for Grouping<T> {
-    fn accept(self, visitor: Box<dyn Visitor<T>>) -> T {
-        visitor.visit_grouping_expr(Box::new(self))
-    }
-}
-
-pub struct Unary<T> {
+pub struct Unary {
     pub(crate) operator: Token,
-    pub(crate) expression: Box<dyn Expr<T>>,
+    pub(crate) expression: Box<Expr>,
 }
 
-impl<T> Expr<T> for Unary<T> {
-    fn accept(self, visitor: Box<dyn Visitor<T>>) -> T {
-        visitor.visit_unary_expr(Box::new(self))
-    }
-}
-
-pub struct Binary<T> {
-    pub(crate) left: Box<dyn Expr<T>>,
+pub struct Binary {
+    pub(crate) left: Box<Expr>,
     pub(crate) operator: Token,
-    pub(crate) right: Box<dyn Expr<T>>,
-}
-
-impl<T> Expr<T> for Binary<T> {
-    fn accept(self, visitor: Box<dyn Visitor<T>>) -> T {
-        visitor.visit_binary_expr(Box::new(self))
-    }
+    pub(crate) right: Box<Expr>,
 }
 
 // Operators

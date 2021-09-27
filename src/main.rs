@@ -1,5 +1,3 @@
-#![feature(unsized_fn_params)]
-
 use std::env::args;
 use std::error::Error;
 use std::fs;
