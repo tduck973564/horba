@@ -4,7 +4,7 @@ pub fn error(line: u32, column: u32, message: &str) {
 
 fn report(line: u32, column: u32, location: &str, message: &str) {
     eprintln!(
-        "[line {} column {}] Error {}: {}",
+        "[line {}, column {}] error {}: {}",
         line, column, location, message
     );
 }
