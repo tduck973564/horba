@@ -2,7 +2,7 @@ use super::token_type::TokenType;
 use std::any::Any;
 use std::fmt::{self, Display};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Token {
     pub token: TokenType,
     pub lexeme: String,

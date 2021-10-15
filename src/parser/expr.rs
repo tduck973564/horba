@@ -1,6 +1,6 @@
 use crate::scanner::token::Token;
 
-pub(crate) trait Visitor<T> {
+pub trait Visitor<T> {
     fn visit(&mut self, expr: &mut Expr) -> T {
         match expr {
             Expr::Grouping(x) => self.visit_grouping(x),
@@ -15,7 +15,8 @@ pub(crate) trait Visitor<T> {
     fn visit_unary(&self, unary: &mut Unary) -> T;
 }
 
-pub(crate) enum Expr {
+#[derive(Debug)]
+pub enum Expr {
     Grouping(Grouping),
     Binary(Binary),
     Literal(Literal),
@@ -23,13 +24,14 @@ pub(crate) enum Expr {
 }
 
 impl Expr {
-    pub(crate) fn accept<T>(&mut self, mut visitor: Box<dyn Visitor<T>>) -> T {
+    pub fn accept<T>(&mut self, mut visitor: Box<dyn Visitor<T>>) -> T {
         visitor.visit(self)
     }
 }
 
 // Expressions
-pub(crate) enum Literal {
+#[derive(Debug)]
+pub enum Literal {
     Number(f64),
     String(String),
     True,
@@ -37,21 +39,25 @@ pub(crate) enum Literal {
     Null,
 }
 
+#[derive(Debug)]
 pub struct Grouping {
-    pub(crate) expression: Box<Expr>,
+    pub expression: Box<Expr>,
 }
 
+#[derive(Debug)]
 pub struct Unary {
-    pub(crate) operator: Token,
-    pub(crate) expression: Box<Expr>,
+    pub operator: Token,
+    pub expression: Box<Expr>,
 }
 
+#[derive(Debug)]
 pub struct Binary {
-    pub(crate) left: Box<Expr>,
-    pub(crate) operator: Token,
-    pub(crate) right: Box<Expr>,
+    pub left: Box<Expr>,
+    pub operator: Token,
+    pub right: Box<Expr>,
 }
 
+#[derive(Debug)]
 // Operators
 enum Operator {
     Equal,

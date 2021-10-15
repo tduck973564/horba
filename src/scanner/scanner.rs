@@ -54,7 +54,7 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<Token> {
+    pub fn scan_tokens(&mut self) -> Vec<Token> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
@@ -65,7 +65,7 @@ impl Scanner {
             self.line,
             self.column,
         ));
-        &self.tokens
+        self.tokens.clone()
     }
 
     fn scan_token(&mut self) {
@@ -191,13 +191,11 @@ impl Scanner {
 
     fn block_comment(&mut self) {
         while !(self.peek(0) == '*' && self.peek(1) == '/' && self.is_at_end()) {
-            println!("{} {}", self.peek(0), self.peek(1));
             if self.peek(0) == '\n' {
                 self.new_line();
             }
             self.advance();
         }
-        println!("{} {}", self.peek(0), self.peek(1));
         self.advance();
         self.advance();
     }

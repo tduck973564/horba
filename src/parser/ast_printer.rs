@@ -3,7 +3,7 @@ use crate::scanner::token::Token;
 use crate::scanner::token_type::TokenType;
 
 #[derive(Clone, Copy)]
-struct AstPrinter;
+pub struct AstPrinter;
 
 impl expr::Visitor<String> for AstPrinter {
     fn visit_grouping(&self, expr: &mut Grouping) -> String {

@@ -9,7 +9,7 @@ pub mod expr;
 
 struct ParseError;
 
-struct Parser {
+pub struct Parser {
     tokens: Vec<Token>,
     current: u32,
 }
@@ -104,7 +104,7 @@ impl Parser {
             let operator = self.peek(-1).clone();
             let expression = self.unary();
             return Ok(Expr::Unary(Unary {
-                operator: operator.clone(),
+                operator,
                 expression: Box::new(expression?),
             }));
         }
@@ -113,7 +113,7 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Result<Expr, ParseError> {
-        match &self.peek(0).token {
+        match &self.advance().token {
             TokenType::False => return Ok(Expr::Literal(Literal::False)),
             TokenType::True => return Ok(Expr::Literal(Literal::True)),
             TokenType::Null => return Ok(Expr::Literal(Literal::Null)),
