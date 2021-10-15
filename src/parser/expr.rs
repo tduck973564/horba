@@ -1,7 +1,7 @@
 use crate::scanner::token::Token;
 
 pub(crate) trait Visitor<T> {
-    fn visit(&mut self, expr: &Expr) -> T {
+    fn visit(&mut self, expr: &mut Expr) -> T {
         match expr {
             Expr::Grouping(x) => self.visit_grouping(x),
             Expr::Binary(x) => self.visit_binary(x),
@@ -9,10 +9,10 @@ pub(crate) trait Visitor<T> {
             Expr::Unary(x) => self.visit_unary(x),
         }
     }
-    fn visit_grouping(&self, grouping: &Grouping) -> T;
-    fn visit_binary(&self, binary: &Binary) -> T;
-    fn visit_literal(&self, literal: &Literal) -> T;
-    fn visit_unary(&self, unary: &Unary) -> T;
+    fn visit_grouping(&self, grouping: &mut Grouping) -> T;
+    fn visit_binary(&self, binary: &mut Binary) -> T;
+    fn visit_literal(&self, literal: &mut Literal) -> T;
+    fn visit_unary(&self, unary: &mut Unary) -> T;
 }
 
 pub(crate) enum Expr {

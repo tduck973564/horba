@@ -37,6 +37,7 @@ lazy_static! {
         m.insert("true", TokenType::True);
         m.insert("let", TokenType::Let);
         m.insert("while", TokenType::While);
+        m.insert("inherits", TokenType::Inherits);
         m
     };
 }
@@ -58,8 +59,12 @@ impl Scanner {
             self.start = self.current;
             self.scan_token();
         }
-        self.tokens
-            .push(Token::new(TokenType::Eof, "".to_string(), self.line));
+        self.tokens.push(Token::new(
+            TokenType::Eof,
+            "".to_string(),
+            self.line,
+            self.column,
+        ));
         &self.tokens
     }
 
@@ -75,7 +80,6 @@ impl Scanner {
             '-' => self.add_token(TokenType::Minus),
             '+' => self.add_token(TokenType::Plus),
             ';' => self.add_token(TokenType::Semicolon),
-            ':' => self.add_token(TokenType::Colon),
             '*' => self.add_token(TokenType::Star),
             '!' => {
                 if self.cmp('=') {
@@ -211,7 +215,7 @@ impl Scanner {
     fn add_token(&mut self, token: TokenType) {
         let text = &self.source[self.start..self.current];
         self.tokens
-            .push(Token::new(token, text.to_string(), self.line));
+            .push(Token::new(token, text.to_string(), self.line, self.column));
     }
 
     fn peek(&self, lookahead: usize) -> char {

@@ -10,7 +10,6 @@ pub enum TokenType {
     Minus,
     Plus,
     Semicolon,
-    Colon,
     Slash,
     Star,
 
@@ -46,6 +45,7 @@ pub enum TokenType {
     True,
     Let,
     While,
+    Inherits,
 
     Eof,
 }

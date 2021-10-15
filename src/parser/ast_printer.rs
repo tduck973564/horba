@@ -6,15 +6,15 @@ use crate::scanner::token_type::TokenType;
 struct AstPrinter;
 
 impl expr::Visitor<String> for AstPrinter {
-    fn visit_grouping(&self, expr: &Grouping) -> String {
-        self.parenthesize("group", vec![expr.expression])
+    fn visit_grouping(&self, expr: &mut Grouping) -> String {
+        self.parenthesize("group", vec![&mut expr.expression])
     }
 
-    fn visit_binary(&self, expr: &Binary) -> String {
-        self.parenthesize(&expr.operator.lexeme, vec![expr.left, expr.right])
+    fn visit_binary(&self, expr: &mut Binary) -> String {
+        self.parenthesize(&expr.operator.lexeme, vec![&mut expr.left, &mut expr.right])
     }
 
-    fn visit_literal(&self, expr: &Literal) -> String {
+    fn visit_literal(&self, expr: &mut Literal) -> String {
         match expr {
             Literal::Number(x) => x.to_string(),
             Literal::String(x) => x.to_string(),
@@ -24,8 +24,8 @@ impl expr::Visitor<String> for AstPrinter {
         }
     }
 
-    fn visit_unary(&self, expr: &Unary) -> String {
-        self.parenthesize(&expr.operator.lexeme, vec![expr.expression])
+    fn visit_unary(&self, expr: &mut Unary) -> String {
+        self.parenthesize(&expr.operator.lexeme, vec![&mut expr.expression])
     }
 }
 
@@ -33,12 +33,13 @@ impl AstPrinter {
     pub fn print(&self, mut expr: Expr) -> String {
         expr.accept(Box::new(*self))
     }
-    fn parenthesize(&self, name: &str, exprs: Vec<Box<Expr>>) -> String {
+
+    fn parenthesize(&self, name: &str, exprs: Vec<&mut Box<Expr>>) -> String {
         let mut string = String::new();
 
         string.push('(');
         string.push_str(name);
-        for mut expr in exprs {
+        for expr in exprs {
             let visitor_string = expr.accept(Box::new(*self));
             string.push(' ');
             string.push_str(&visitor_string);
@@ -55,6 +56,7 @@ pub fn ast_test() {
                 token: TokenType::Minus,
                 lexeme: "-".to_string(),
                 line: 1,
+                column: 1,
             },
             expression: Box::new(Expr::Literal(Literal::Number(123.0))),
         })),
@@ -62,6 +64,7 @@ pub fn ast_test() {
             token: TokenType::Star,
             lexeme: "*".to_string(),
             line: 1,
+            column: 1,
         },
         right: Box::new(Expr::Grouping(Grouping {
             expression: Box::new(Expr::Literal(Literal::Number(45.67))),

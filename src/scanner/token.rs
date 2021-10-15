@@ -4,17 +4,19 @@ use std::fmt::{self, Display};
 
 #[derive(Clone)]
 pub struct Token {
-    pub(crate) token: TokenType,
-    pub(crate) lexeme: String,
-    pub(crate) line: u32,
+    pub token: TokenType,
+    pub lexeme: String,
+    pub line: u32,
+    pub column: u32,
 }
 
 impl Token {
-    pub fn new(token: TokenType, lexeme: String, line: u32) -> Token {
+    pub fn new(token: TokenType, lexeme: String, line: u32, column: u32) -> Token {
         Token {
             token,
             lexeme,
             line,
+            column,
         }
     }
 
