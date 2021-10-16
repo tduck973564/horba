@@ -44,9 +44,9 @@ fn run(source: String) {
 
     let mut parser = parser::Parser::new(source, tokens);
     while let Some(expression) = parser.parse() {
-        println!("expr: {:?}", expression);
+        println!("expr: {:?}\n", expression);
         println!(
-            "expr astprinter: {}",
+            "astprinter: {}\n\n",
             parser::ast_printer::AstPrinter {}.print(expression)
         )
     }

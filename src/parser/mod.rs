@@ -25,6 +25,9 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Option<Expr> {
+        if self.is_at_end() {
+            return None;
+        }
         match self.expression() {
             Ok(x) => Some(x),
             Err(_) => None,
@@ -194,13 +197,12 @@ impl Parser {
     fn advance(&mut self) -> &Token {
         if !self.is_at_end() {
             self.current += 1;
-            println!("{}", self.current);
         }
         self.peek(-1)
     }
 
     fn is_at_end(&self) -> bool {
-        self.tokens.get((self.current as i32) as usize).is_some()
+        self.current as usize == self.tokens.len() - 1
     }
 
     fn peek(&self, offset: i32) -> &Token {
