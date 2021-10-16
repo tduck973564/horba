@@ -37,16 +37,16 @@ fn run_prompt() {
 fn run(source: String) {
     let mut scanner = scanner::scanner::Scanner::new(source.clone());
     let tokens = scanner.scan_tokens();
-
-    /*for token in tokens {
+    println!();
+    for token in &tokens {
         println!("{}", token);
-    }*/
-
+    }
+    println!();
     let mut parser = parser::Parser::new(source, tokens);
     while let Some(expression) = parser.parse() {
-        println!("expr: {:?}\n", expression);
+        println!("expr: {:?}", expression);
         println!(
-            "astprinter: {}\n\n",
+            "astprinter: {}\n",
             parser::ast_printer::AstPrinter {}.print(expression)
         )
     }
