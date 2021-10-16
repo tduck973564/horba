@@ -1,4 +1,4 @@
-use crate::error;
+use crate::error::{self, LogLevel};
 use crate::parser::expr::*;
 use crate::scanner::token::Token;
 use crate::scanner::token_type::TokenType;
@@ -10,13 +10,18 @@ pub mod expr;
 struct ParseError;
 
 pub struct Parser {
+    source: String,
     tokens: Vec<Token>,
-    current: u32,
+    pub current: u32,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Parser {
-        Parser { tokens, current: 0 }
+    pub fn new(source: String, tokens: Vec<Token>) -> Parser {
+        Parser {
+            source,
+            tokens,
+            current: 0,
+        }
     }
 
     pub fn parse(&mut self) -> Option<Expr> {
@@ -27,7 +32,44 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, ParseError> {
-        self.equality()
+        self.comma()
+    }
+
+    fn comma(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.ternary();
+
+        while self.cmp(&[TokenType::Comma]) {
+            let next = self.ternary();
+            expr = Ok(Expr::Comma(Comma {
+                expr: Box::new(expr?),
+                next: Box::new(next?),
+            }));
+        }
+
+        expr
+    }
+
+    fn ternary(&mut self) -> Result<Expr, ParseError> {
+        let mut condition = self.equality();
+
+        if self.cmp(&[TokenType::Question]) {
+            let if_true = self.expression()?;
+
+            self.consume(
+                TokenType::Colon,
+                "Expect ':' after then branch of conditional expression.",
+            )?;
+
+            let if_false = self.expression()?;
+
+            condition = Ok(Expr::Ternary(Ternary {
+                condition: Box::new(condition?),
+                if_true: Box::new(if_true),
+                if_false: Box::new(if_false),
+            }))
+        }
+
+        condition
     }
 
     fn equality(&mut self) -> Result<Expr, ParseError> {
@@ -88,6 +130,7 @@ impl Parser {
 
         while self.cmp(&[TokenType::Slash, TokenType::Star]) {
             let operator = self.peek(-1).clone();
+            println!("{}", operator.lexeme);
             let right = self.unary();
             expr = Ok(Expr::Binary(Binary {
                 left: Box::new(expr?),
@@ -114,22 +157,20 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expr, ParseError> {
         match &self.advance().token {
-            TokenType::False => return Ok(Expr::Literal(Literal::False)),
-            TokenType::True => return Ok(Expr::Literal(Literal::True)),
-            TokenType::Null => return Ok(Expr::Literal(Literal::Null)),
-            TokenType::Number(x) => return Ok(Expr::Literal(Literal::Number(*x))),
-            TokenType::String(x) => return Ok(Expr::Literal(Literal::String(x.clone()))),
+            TokenType::False => Ok(Expr::Literal(Literal::False)),
+            TokenType::True => Ok(Expr::Literal(Literal::True)),
+            TokenType::Null => Ok(Expr::Literal(Literal::Null)),
+            TokenType::Number(x) => Ok(Expr::Literal(Literal::Number(*x))),
+            TokenType::String(x) => Ok(Expr::Literal(Literal::String(x.clone()))),
             TokenType::LeftParen => {
                 let expr = self.expression();
                 self.consume(TokenType::RightParen, "Expected ')' after expression.")?;
-                return Ok(Expr::Grouping(Grouping {
+                Ok(Expr::Grouping(Grouping {
                     expression: Box::new(expr?),
-                }));
+                }))
             }
-            _ => {}
-        };
-
-        Err(self.error(self.peek(0), "Expect expression."))
+            _ => Err(self.error(self.peek(0), "Expect expression.")),
+        }
     }
 
     // Helpers
@@ -153,12 +194,13 @@ impl Parser {
     fn advance(&mut self) -> &Token {
         if !self.is_at_end() {
             self.current += 1;
+            println!("{}", self.current);
         }
         self.peek(-1)
     }
 
     fn is_at_end(&self) -> bool {
-        self.peek(0).token == TokenType::Eof
+        self.tokens.get((self.current as i32) as usize).is_some()
     }
 
     fn peek(&self, offset: i32) -> &Token {
@@ -180,11 +222,20 @@ impl Parser {
             error::report(
                 token.line,
                 token.column,
+                LogLevel::Error,
                 &format!("at '{}'", token.lexeme),
                 message,
+                &self.source,
             );
         } else {
-            error::report(token.line, token.column, "at end", message);
+            error::report(
+                token.line,
+                token.column,
+                LogLevel::Error,
+                "at end",
+                message,
+                &self.source,
+            );
         }
 
         ParseError {}

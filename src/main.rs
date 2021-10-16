@@ -14,7 +14,6 @@ fn main() {
         x if x == 2 => run_file(&args[1]).expect("Could not run file"),
         _ => run_prompt(),
     };
-    //parser::ast_printer::ast_test();
 }
 
 fn run_file(path: &str) -> Result<(), Box<dyn Error>> {
@@ -36,18 +35,19 @@ fn run_prompt() {
 }
 
 fn run(source: String) {
-    let mut scanner = scanner::scanner::Scanner::new(source);
+    let mut scanner = scanner::scanner::Scanner::new(source.clone());
     let tokens = scanner.scan_tokens();
-    println!();
 
-    for token in &tokens {
+    /*for token in tokens {
         println!("{}", token);
+    }*/
+
+    let mut parser = parser::Parser::new(source, tokens);
+    while let Some(expression) = parser.parse() {
+        println!("expr: {:?}", expression);
+        println!(
+            "expr astprinter: {}",
+            parser::ast_printer::AstPrinter {}.print(expression)
+        )
     }
-    println!();
-
-    let mut parser = parser::Parser::new(tokens);
-    let expression = parser.parse().unwrap();
-    println!("{:?}", expression);
-
-    println!("{}", parser::ast_printer::AstPrinter {}.print(expression))
 }

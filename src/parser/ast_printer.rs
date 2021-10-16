@@ -1,4 +1,4 @@
-use super::expr::{self, Binary, Expr, Grouping, Literal, Unary};
+use super::expr::{self, *};
 use crate::scanner::token::Token;
 use crate::scanner::token_type::TokenType;
 
@@ -26,6 +26,17 @@ impl expr::Visitor<String> for AstPrinter {
 
     fn visit_unary(&self, expr: &mut Unary) -> String {
         self.parenthesize(&expr.operator.lexeme, vec![&mut expr.expression])
+    }
+
+    fn visit_ternary(&self, expr: &mut Ternary) -> String {
+        self.parenthesize(
+            "ternary",
+            vec![&mut expr.condition, &mut expr.if_true, &mut expr.if_false],
+        )
+    }
+
+    fn visit_comma(&self, expr: &mut Comma) -> String {
+        self.parenthesize("comma", vec![&mut expr.expr, &mut expr.next])
     }
 }
 

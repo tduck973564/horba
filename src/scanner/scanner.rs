@@ -1,6 +1,6 @@
 use super::token::Token;
 use super::token_type::TokenType;
-use crate::error;
+use crate::error::{self, LogLevel};
 
 use lazy_static::lazy_static;
 use std::collections::HashMap;
@@ -37,7 +37,6 @@ lazy_static! {
         m.insert("true", TokenType::True);
         m.insert("let", TokenType::Let);
         m.insert("while", TokenType::While);
-        m.insert("inherits", TokenType::Inherits);
         m
     };
 }
@@ -50,7 +49,7 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
-            column: 1,
+            column: 0,
         }
     }
 
@@ -80,6 +79,8 @@ impl Scanner {
             '-' => self.add_token(TokenType::Minus),
             '+' => self.add_token(TokenType::Plus),
             ';' => self.add_token(TokenType::Semicolon),
+            ':' => self.add_token(TokenType::Colon),
+            '?' => self.add_token(TokenType::Question),
             '*' => self.add_token(TokenType::Star),
             '!' => {
                 if self.cmp('=') {
@@ -115,13 +116,13 @@ impl Scanner {
                     while self.peek(0) != '\n' && !self.is_at_end() {
                         self.advance();
                     }
+                    self.new_line();
                 }
                 '*' => {
                     self.advance();
                     self.block_comment();
                 }
                 _ => {
-                    self.advance();
                     self.add_token(TokenType::Slash);
                 }
             },
@@ -131,11 +132,8 @@ impl Scanner {
             x if x.is_digit(10) => self.number(),
             x if is_ident_char(x) => self.identifier(),
             x => {
-                error::error(
-                    self.line,
-                    self.column,
-                    &format!("Unexpected character: {}", x),
-                );
+                self.report(LogLevel::Error, "", &format!("Unexpected character: {}", x));
+                self.advance();
             }
         }
     }
@@ -149,7 +147,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            error::error(self.line, self.column, "Unterminated string.");
+            self.report(LogLevel::Error, "", "Unterminated string.");
             return;
         }
 
@@ -190,7 +188,7 @@ impl Scanner {
     }
 
     fn block_comment(&mut self) {
-        while !(self.peek(0) == '*' && self.peek(1) == '/' && self.is_at_end()) {
+        while !(self.peek(0) == '*' && self.peek(1) == '/') && !self.is_at_end() {
             if self.peek(0) == '\n' {
                 self.new_line();
             }
@@ -207,6 +205,7 @@ impl Scanner {
     fn advance(&mut self) -> char {
         let out = self.source.chars().nth(self.current).unwrap_or('\0');
         self.current += 1;
+        self.column += 1;
         out
     }
 
@@ -230,8 +229,21 @@ impl Scanner {
         self.current += 1;
         true
     }
+
     fn new_line(&mut self) {
         self.line += 1;
-        self.column = 1;
+        self.column = 0;
+    }
+
+    // Error helper
+    fn report(&self, log_level: LogLevel, location: &str, message: &str) {
+        error::report(
+            self.line,
+            self.column,
+            log_level,
+            location,
+            message,
+            &self.source,
+        );
     }
 }

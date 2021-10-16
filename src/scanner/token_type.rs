@@ -10,8 +10,10 @@ pub enum TokenType {
     Minus,
     Plus,
     Semicolon,
+    Colon,
     Slash,
     Star,
+    Question,
 
     // One or two character tokens
     Bang,
@@ -45,7 +47,6 @@ pub enum TokenType {
     True,
     Let,
     While,
-    Inherits,
 
     Eof,
 }
