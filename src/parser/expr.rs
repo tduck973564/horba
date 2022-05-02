@@ -1,4 +1,5 @@
 use crate::scanner::token::Token;
+use std::any::Any;
 
 pub trait Visitor<T> {
     fn visit(&mut self, expr: &mut Expr) -> T {
@@ -36,13 +37,44 @@ impl Expr {
 }
 
 // Expressions
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     Number(f64),
     String(String),
     True,
     False,
     Null,
+}
+
+impl Literal {
+    pub fn get(&self) -> Box<dyn Any> {
+        use Literal::*;
+
+        match self {
+            Number(x) => Box::new(x.clone()), 
+            String(x) => Box::new(x.clone()),
+            True => Box::new(true),
+            False => Box::new(false),
+            Null => Box::new(()),
+        }
+    }
+
+    pub fn to_bool(expr: Literal) -> Literal {
+        use Literal::*;
+
+        match expr {
+            False | Null => False,
+            _ => True,
+        }
+    }
+    pub fn negate(expr: Literal) -> Literal {
+        use Literal::*;
+
+        match expr {
+            False | Null => True,
+            _ => False,
+        }
+    }
 }
 
 #[derive(Debug)]
