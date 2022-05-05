@@ -1,7 +1,3 @@
-// Ignore this comment; this is done
-// This is garbage, why are we returning a language representation
-// Rewrite this to return literal struct
-
 use super::runtime_error::RuntimeError;
 use super::expr::{Expr, Visitor};
 use crate::parser::expr::{Binary, Comma, Grouping, Literal, Ternary, Unary};

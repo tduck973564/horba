@@ -1,3 +1,6 @@
+// TODO: Get string representations of each TokenType in here, not in the scanner.
+// HashMaps aren't as efficient.
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     // Single-character tokens

@@ -24,17 +24,17 @@ lazy_static! {
         m.insert("and", TokenType::And);
         m.insert("class", TokenType::Class);
         m.insert("else", TokenType::Else);
-        m.insert("false", TokenType::False);
+        m.insert("False", TokenType::False);
         m.insert("for", TokenType::For);
         m.insert("fn", TokenType::Fn);
         m.insert("if", TokenType::If);
-        m.insert("null", TokenType::Null);
+        m.insert("Null", TokenType::Null);
         m.insert("or", TokenType::Or);
         m.insert("print", TokenType::Print);
         m.insert("return", TokenType::Return);
         m.insert("super", TokenType::Super);
         m.insert("self", TokenType::_Self);
-        m.insert("true", TokenType::True);
+        m.insert("True", TokenType::True);
         m.insert("let", TokenType::Let);
         m.insert("while", TokenType::While);
         m
