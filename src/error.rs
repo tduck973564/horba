@@ -23,6 +23,7 @@ pub fn report(
     );
 }
 
+#[derive(Clone, Copy)]
 pub enum LogLevel {
     Error,
     Warning,
@@ -37,4 +38,8 @@ impl Display for LogLevel {
             LogLevel::Info => f.write_str(&"info".bold().blue().to_string()),
         }
     }
+}
+
+pub trait Error {
+    fn report(&self, source: &str);
 }

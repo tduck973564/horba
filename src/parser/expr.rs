@@ -1,5 +1,6 @@
 use crate::scanner::token::Token;
 use std::any::Any;
+use std::fmt;
 
 pub trait Visitor<T> {
     fn visit(&mut self, expr: &mut Expr) -> T {
@@ -59,21 +60,44 @@ impl Literal {
         }
     }
 
-    pub fn to_bool(expr: Literal) -> Literal {
+    pub fn is_truthy(expr: Literal) -> bool {
         use Literal::*;
 
         match expr {
-            False | Null => False,
-            _ => True,
+            False | Null => false,
+            _ => true,
+        }
+    }
+
+    pub fn to_bool(expr: Literal) -> Literal {
+        use Literal::*;
+
+        match Literal::is_truthy(expr) {
+            true => True,
+            false => False,
         }
     }
     pub fn negate(expr: Literal) -> Literal {
         use Literal::*;
 
-        match expr {
-            False | Null => True,
-            _ => False,
+        match !Literal::is_truthy(expr) {
+            true => True,
+            false => False
         }
+    }
+}
+
+impl fmt::Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use Literal::*;
+
+        write!(f, "{}", match &self {
+            Number(x) => x.to_string(),
+            String(x) => x.to_string(),
+            True => "True".to_string(),
+            False => "False".to_string(),
+            Null => "Null".to_string(),
+        })
     }
 }
 
@@ -123,6 +147,7 @@ enum Operator {
     Divide,
 }
 
+#[derive(Debug)]
 enum UnaryOperator {
     Negative,
     Not,

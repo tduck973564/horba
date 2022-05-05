@@ -7,6 +7,7 @@ use std::mem::discriminant;
 pub mod ast_printer;
 pub mod expr;
 pub mod interpreter;
+pub mod runtime_error;
 
 struct ParseError;
 
