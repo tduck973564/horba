@@ -135,7 +135,6 @@ impl Parser {
 
         while self.cmp(&[TokenType::Slash, TokenType::Star]) {
             let operator = self.peek(-1).clone();
-            println!("{}", operator.lexeme);
             let right = self.unary();
             expr = Ok(Expr::Binary(Binary {
                 left: Box::new(expr?),

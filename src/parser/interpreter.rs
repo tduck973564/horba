@@ -9,20 +9,24 @@ use crate::scanner::token_type::TokenType;
 use crate::scanner::token::Token;
 use crate::error::Error;
 use crate::error::LogLevel;
-use std::any::Any;
 use std::any::TypeId;
 
 #[derive(Clone)]
 pub struct Interpreter;
 
 fn downcast<T: 'static>(to_check: Literal, location: Token) -> Result<T, RuntimeError> {
+    // I just realised that this is using Rust types for a Horba error message.
+    // I hate this.
+    // TODO: Remove the type argument, implement TryFrom on Literal instead. Meh but works.
+    // This function is not needed and makes everything far more obtuse than it should be, and just plain wrong.
+
     if TypeId::of::<T>() == (&*to_check.get()).type_id() {
         return Ok(*(to_check.get().downcast::<T>().unwrap()))
     }
     Err(RuntimeError { 
         token: location,
         log_level: LogLevel::Error, 
-        message: format!("Invalid type: expected {:#?}, got {:#?}", TypeId::of::<T>(), to_check.type_id()) 
+        message: format!("Invalid type: expected {:#?}, got {:#?}", TypeId::of::<T>(), (&*to_check.get()).type_id()) 
     })
 }
 
