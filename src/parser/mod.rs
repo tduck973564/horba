@@ -245,6 +245,8 @@ impl Parser {
         ParseError {}
     }
 
+    #[allow(dead_code)]
+    // I don't know what this is anymore or what it does but I am just going to leave it here for now.
     fn synchronise(&mut self) {
         self.advance();
 

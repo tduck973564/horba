@@ -132,8 +132,9 @@ pub struct Comma {
     pub next: Box<Expr>,
 }
 
-#[derive(Debug)]
 // Operators
+#[derive(Debug)]
+#[allow(dead_code)]
 enum Operator {
     Equal,
     NotEqual,
@@ -148,6 +149,7 @@ enum Operator {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 enum UnaryOperator {
     Negative,
     Not,
