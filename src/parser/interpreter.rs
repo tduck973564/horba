@@ -17,6 +17,9 @@ fn expected_type_msg(expected: &str, got: &str) -> String {
     format!("Expected {} type, got {}.", expected, got)
 }
 
+// Why did I think of this??
+// Just pass a tuple to TryFrom.
+// TODO
 pub trait DowncastFrom<T> {
     type Error;
 
