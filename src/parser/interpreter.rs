@@ -20,24 +20,24 @@ fn expected_type_msg(expected: &str, got: &str) -> String {
 // Why did I think of this??
 // Just pass a tuple to TryFrom.
 // TODO
-pub trait DowncastFrom<T> {
+/*pub trait DowncastFrom<T> {
     type Error;
 
     fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error>
     where
         Self: Sized;
-}
+}*/
 
-impl DowncastFrom<Literal> for f64 {
+impl TryFrom<(Literal, Token)> for f64 {
     type Error = RuntimeError;
 
-    fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error> {
+    fn try_from(value: (Literal, Token) -> Result<Self, Self::Error> {
         use Literal::*;
 
-        match expr {
+        match value.0 {
             Number(x) => Ok(x),
             x => Err(RuntimeError {
-                token,
+                token: value.1,
                 log_level: LogLevel::Error,
                 message: expected_type_msg("Number", &Literal::type_name(&x)),
             }),
@@ -45,16 +45,16 @@ impl DowncastFrom<Literal> for f64 {
     }
 }
 
-impl DowncastFrom<Literal> for String {
+impl TryFrom<(Literal, Token)> for String {
     type Error = RuntimeError;
 
-    fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error> {
+    fn try_from(value: (Literal, Token)) -> Result<Self, Self::Error> {
         use Literal::*;
 
-        match expr {
+        match value.0 {
             String(x) => Ok(x),
             x => Err(RuntimeError {
-                token,
+                token: value.1,
                 log_level: LogLevel::Error,
                 message: expected_type_msg("String", &Literal::type_name(&x)),
             }),
@@ -62,17 +62,17 @@ impl DowncastFrom<Literal> for String {
     }
 }
 
-impl DowncastFrom<Literal> for bool {
+impl TryFrom<(Literal, Token)> for bool {
     type Error = RuntimeError;
 
-    fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error> {
+    fn try_from(value: (Literal, Token)) -> Result<Self, Self::Error> {
         use Literal::*;
 
-        match expr {
+        match value.0 {
             True => Ok(true),
             False => Ok(false),
             x => Err(RuntimeError {
-                token,
+                token: value.1,
                 log_level: LogLevel::Error,
                 message: expected_type_msg("Bool", &Literal::type_name(&x)),
             }),
@@ -119,6 +119,7 @@ impl Interpreter {
     }
 }
 
+// TODO fix it with new TryFrom implementation
 impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_grouping(&self, grouping: &mut Grouping) -> Result<Literal, RuntimeError> {
         self.evaluate(grouping.expression.as_mut())
