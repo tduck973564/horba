@@ -1,5 +1,5 @@
 // TODO: Get string representations of each TokenType in here, not in the scanner.
-// HashMaps aren't as efficient.
+// HashMaps aren't as efficient, and this could be achieved with fmt::Display much more idiomatically.
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {

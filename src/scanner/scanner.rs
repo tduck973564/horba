@@ -18,6 +18,8 @@ fn is_ident_char(c: char) -> bool {
     c.is_alphabetic() || c == '_'
 }
 
+// why?? just implement Display
+// see token_type.rs
 lazy_static! {
     static ref KEYWORDS_TABLE: HashMap<&'static str, TokenType> = {
         let mut m = HashMap::new();

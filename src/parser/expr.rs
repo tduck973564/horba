@@ -1,5 +1,4 @@
 use crate::scanner::token::Token;
-use std::any::Any;
 use std::fmt;
 
 pub trait Visitor<T> {
@@ -38,6 +37,10 @@ impl Expr {
 }
 
 // Expressions
+
+// In all honesty True and False probably should be in a separate enum, then put in Literal as Bool(Bool).
+// They aren't supposed to be separate types.
+// TODO
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     Number(f64),
@@ -48,19 +51,7 @@ pub enum Literal {
 }
 
 impl Literal {
-    pub fn get(&self) -> Box<dyn Any> {
-        use Literal::*;
-
-        match self {
-            Number(x) => Box::new(x.clone()), 
-            String(x) => Box::new(x.clone()),
-            True => Box::new(true),
-            False => Box::new(false),
-            Null => Box::new(()),
-        }
-    }
-
-    pub fn is_truthy(expr: Literal) -> bool {
+    pub fn is_truthy(expr: &Literal) -> bool {
         use Literal::*;
 
         match expr {
@@ -69,7 +60,7 @@ impl Literal {
         }
     }
 
-    pub fn to_bool(expr: Literal) -> Literal {
+    pub fn to_bool(expr: &Literal) -> Literal {
         use Literal::*;
 
         match Literal::is_truthy(expr) {
@@ -77,12 +68,22 @@ impl Literal {
             false => False,
         }
     }
-    pub fn negate(expr: Literal) -> Literal {
+    pub fn negate(expr: &Literal) -> Literal {
         use Literal::*;
 
         match !Literal::is_truthy(expr) {
             true => True,
-            false => False
+            false => False,
+        }
+    }
+    pub fn type_name(expr: &Literal) -> String {
+        use Literal::*;
+
+        match expr {
+            Number(_) => "Number".to_string(),
+            String(_) => "String".to_string(),
+            True | False => "Bool".to_string(),
+            Null => "Null".to_string(),
         }
     }
 }
@@ -91,13 +92,17 @@ impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         use Literal::*;
 
-        write!(f, "{}", match &self {
-            Number(x) => x.to_string(),
-            String(x) => x.to_string(),
-            True => "True".to_string(),
-            False => "False".to_string(),
-            Null => "Null".to_string(),
-        })
+        write!(
+            f,
+            "{}",
+            match &self {
+                Number(x) => x.to_string(),
+                String(x) => x.to_string(),
+                True => "True".to_string(),
+                False => "False".to_string(),
+                Null => "Null".to_string(),
+            }
+        )
     }
 }
 

@@ -1,5 +1,5 @@
-use crate::scanner::token::Token;
 use crate::error;
+use crate::scanner::token::Token;
 use std::fmt;
 
 pub struct RuntimeError {
@@ -16,6 +16,13 @@ impl fmt::Display for RuntimeError {
 
 impl error::Error for RuntimeError {
     fn report(&self, source: &str) {
-        error::report(self.token.line, self.token.column, self.log_level, "", &self.message, source)
+        error::report(
+            self.token.line,
+            self.token.column,
+            self.log_level,
+            "",
+            &self.message,
+            source,
+        )
     }
 }

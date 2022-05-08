@@ -1,15 +1,84 @@
-use super::runtime_error::RuntimeError;
 use super::expr::{Expr, Visitor};
-use crate::parser::expr::{Binary, Comma, Grouping, Literal, Ternary, Unary};
-use crate::scanner::token_type::TokenType;
-use crate::scanner::token::Token;
+use super::runtime_error::RuntimeError;
 use crate::error::Error;
 use crate::error::LogLevel;
-use std::any::TypeId;
+use crate::parser::expr::{Binary, Comma, Grouping, Literal, Ternary, Unary};
+use crate::scanner::token::Token;
+use crate::scanner::token_type::TokenType;
 
 #[derive(Clone)]
 pub struct Interpreter;
 
+// This is how we get the enum into something Rust can do arithmetic on.
+// Trust me, it's better this way.
+// Long and verbose but not cursed.
+
+fn expected_type_msg(expected: &str, got: &str) -> String {
+    format!("Expected {} type, got {}.", expected, got)
+}
+
+pub trait DowncastFrom<T> {
+    type Error;
+
+    fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error>
+    where
+        Self: Sized;
+}
+
+impl DowncastFrom<Literal> for f64 {
+    type Error = RuntimeError;
+
+    fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error> {
+        use Literal::*;
+
+        match expr {
+            Number(x) => Ok(x),
+            x => Err(RuntimeError {
+                token,
+                log_level: LogLevel::Error,
+                message: expected_type_msg("Number", &Literal::type_name(&x)),
+            }),
+        }
+    }
+}
+
+impl DowncastFrom<Literal> for String {
+    type Error = RuntimeError;
+
+    fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error> {
+        use Literal::*;
+
+        match expr {
+            String(x) => Ok(x),
+            x => Err(RuntimeError {
+                token,
+                log_level: LogLevel::Error,
+                message: expected_type_msg("String", &Literal::type_name(&x)),
+            }),
+        }
+    }
+}
+
+impl DowncastFrom<Literal> for bool {
+    type Error = RuntimeError;
+
+    fn downcast_from(expr: Literal, token: Token) -> Result<Self, Self::Error> {
+        use Literal::*;
+
+        match expr {
+            True => Ok(true),
+            False => Ok(false),
+            x => Err(RuntimeError {
+                token,
+                log_level: LogLevel::Error,
+                message: expected_type_msg("Bool", &Literal::type_name(&x)),
+            }),
+        }
+    }
+}
+
+// Goodbye cursed garbage
+/*
 fn downcast<T: 'static>(to_check: Literal, location: Token) -> Result<T, RuntimeError> {
     // I just realised that this is using Rust types for a Horba error message.
     // I hate this.
@@ -19,20 +88,27 @@ fn downcast<T: 'static>(to_check: Literal, location: Token) -> Result<T, Runtime
     if TypeId::of::<T>() == (&*to_check.get()).type_id() {
         return Ok(*(to_check.get().downcast::<T>().unwrap()))
     }
-    Err(RuntimeError { 
+    Err(RuntimeError {
         token: location,
-        log_level: LogLevel::Error, 
-        message: format!("Invalid type: expected {:#?}, got {:#?}", TypeId::of::<T>(), (&*to_check.get()).type_id()) 
+        log_level: LogLevel::Error,
+        message: format!("Invalid type: expected {:#?}, got {:#?}", TypeId::of::<T>(), (&*to_check.get()).type_id())
     })
 }
+*/
 
 impl Interpreter {
     pub fn interpret(&self, mut expr: Expr, source: &str) -> Result<(), ()> {
         let evaluated = self.evaluate(&mut expr);
 
         match evaluated {
-            Ok(x) => { println!("{}", x); Ok(()) },
-            Err(e) => { e.report(source); Err(()) }
+            Ok(x) => {
+                println!("{}", x);
+                Ok(())
+            }
+            Err(e) => {
+                e.report(source);
+                Err(())
+            }
         }
     }
     fn evaluate(&self, expr: &mut Expr) -> Result<Literal, RuntimeError> {
@@ -51,82 +127,80 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
 
         return match binary.operator.token {
             TokenType::Minus => Ok(Literal::Number(
-                downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? - downcast::<f64>(right, binary.operator.clone()
-                )?
+                f64::downcast_from(left, binary.operator.clone())?
+                    - f64::downcast_from(right, binary.operator.clone())?,
             )),
             TokenType::Plus => Ok(Literal::Number(
-                downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? + downcast::<f64>(right, binary.operator.clone()
-                )?
+                f64::downcast_from(left, binary.operator.clone())?
+                    + f64::downcast_from(right, binary.operator.clone())?,
             )),
             TokenType::Slash => Ok(Literal::Number(
-                downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? / downcast::<f64>(right, binary.operator.clone()
-                )?
+                f64::downcast_from(left, binary.operator.clone())?
+                    / f64::downcast_from(right, binary.operator.clone())?,
             )),
             TokenType::Star => Ok(Literal::Number(
-                downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? * downcast::<f64>(right, binary.operator.clone()
-                )?
+                f64::downcast_from(left, binary.operator.clone())?
+                    * f64::downcast_from(right, binary.operator.clone())?,
             )),
-            TokenType::Greater =>
-                if downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? > downcast::<f64>(right, binary.operator.clone()
-                )? {
-                    Ok(Literal::True) 
-                } else { 
-                    Ok(Literal::False) 
-                },
-            TokenType::GreaterEqual => 
-                if downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? >= downcast::<f64>(right, binary.operator.clone()
-                )? {
-                    Ok(Literal::True) 
-                } else { 
-                    Ok(Literal::False) 
-                },
-            TokenType::Less => 
-                if downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? < downcast::<f64>(right, binary.operator.clone()
-                )? {
-                    Ok(Literal::True) 
-                } else { 
-                    Ok(Literal::False) 
-                },
-            TokenType::LessEqual => 
-                if downcast::<f64>(
-                    left, 
-                    binary.operator.clone())? <= downcast::<f64>(right, binary.operator.clone()
-                )? {
-                    Ok(Literal::True) 
-                } else { 
-                    Ok(Literal::False) 
-                },
-            TokenType::BangEqual => 
-                if left != right { Ok(Literal::True) }
-                else { Ok(Literal::False) }
-            TokenType::EqualEqual => 
-                if left == right { Ok(Literal::True) }
-                else { Ok(Literal::False) }
+            TokenType::Greater => {
+                if f64::downcast_from(left, binary.operator.clone())?
+                    > f64::downcast_from(right, binary.operator.clone())?
+                {
+                    Ok(Literal::True)
+                } else {
+                    Ok(Literal::False)
+                }
+            }
+            TokenType::GreaterEqual => {
+                if f64::downcast_from(left, binary.operator.clone())?
+                    >= f64::downcast_from(right, binary.operator.clone())?
+                {
+                    Ok(Literal::True)
+                } else {
+                    Ok(Literal::False)
+                }
+            }
+            TokenType::Less => {
+                if f64::downcast_from(left, binary.operator.clone())?
+                    < f64::downcast_from(right, binary.operator.clone())?
+                {
+                    Ok(Literal::True)
+                } else {
+                    Ok(Literal::False)
+                }
+            }
+            TokenType::LessEqual => {
+                if f64::downcast_from(left, binary.operator.clone())?
+                    <= f64::downcast_from(right, binary.operator.clone())?
+                {
+                    Ok(Literal::True)
+                } else {
+                    Ok(Literal::False)
+                }
+            }
+            TokenType::BangEqual => {
+                if left != right {
+                    Ok(Literal::True)
+                } else {
+                    Ok(Literal::False)
+                }
+            }
+            TokenType::EqualEqual => {
+                if left == right {
+                    Ok(Literal::True)
+                } else {
+                    Ok(Literal::False)
+                }
+            }
 
             _ => {
-                return Err(
-                    RuntimeError { 
-                        token: binary.operator.clone(), 
-                        log_level: LogLevel::Error, 
-                        message: "Expected two numbers on each side of the operator.".to_string()
-                    }
-                )
+                return Err(RuntimeError {
+                    token: binary.operator.clone(),
+                    log_level: LogLevel::Error,
+                    message: "Expected two numbers on each side of the operator.".to_string(),
+                })
             }
-        }
+        };
     }
 
     fn visit_literal(&self, literal: &mut Literal) -> Result<Literal, RuntimeError> {
@@ -137,9 +211,12 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
         let right = self.evaluate(unary.expression.as_mut())?;
 
         match unary.operator.token {
-            TokenType::Minus => Ok(Literal::Number(downcast::<f64>(right, unary.operator.clone())?)),
-            TokenType::Bang => Ok(Literal::negate(right)),
-            _ => Ok(Literal::Null) // unreachable
+            TokenType::Minus => Ok(Literal::Number(f64::downcast_from(
+                right,
+                unary.operator.clone(),
+            )?)),
+            TokenType::Bang => Ok(Literal::negate(&right)),
+            _ => Ok(Literal::Null), // unreachable
         }
     }
 
@@ -148,9 +225,9 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
         let if_true = self.evaluate(ternary.if_true.as_mut())?;
         let if_false = self.evaluate(ternary.if_false.as_mut())?;
 
-        match Literal::is_truthy(condition) {
+        match Literal::is_truthy(&condition) {
             true => Ok(if_true),
-            false => Ok(if_false)
+            false => Ok(if_false),
         }
     }
 
@@ -170,4 +247,3 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
         }
     }
 }
-
