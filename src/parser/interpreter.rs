@@ -28,10 +28,12 @@ fn expected_type_msg(expected: &str, got: &str) -> String {
         Self: Sized;
 }*/
 
-impl TryFrom<(Literal, Token)> for f64 {
+struct LiteralWithToken(Literal, Token);
+
+impl TryFrom<LiteralWithToken> for f64 {
     type Error = RuntimeError;
 
-    fn try_from(value: (Literal, Token) -> Result<Self, Self::Error> {
+    fn try_from(value: LiteralWithToken) -> Result<Self, Self::Error> {
         use Literal::*;
 
         match value.0 {
@@ -45,10 +47,10 @@ impl TryFrom<(Literal, Token)> for f64 {
     }
 }
 
-impl TryFrom<(Literal, Token)> for String {
+impl TryFrom<LiteralWithToken> for String {
     type Error = RuntimeError;
 
-    fn try_from(value: (Literal, Token)) -> Result<Self, Self::Error> {
+    fn try_from(value: LiteralWithToken) -> Result<Self, Self::Error> {
         use Literal::*;
 
         match value.0 {
@@ -62,10 +64,10 @@ impl TryFrom<(Literal, Token)> for String {
     }
 }
 
-impl TryFrom<(Literal, Token)> for bool {
+impl TryFrom<LiteralWithToken> for bool {
     type Error = RuntimeError;
 
-    fn try_from(value: (Literal, Token)) -> Result<Self, Self::Error> {
+    fn try_from(value: LiteralWithToken) -> Result<Self, Self::Error> {
         use Literal::*;
 
         match value.0 {
@@ -131,24 +133,24 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
 
         return match binary.operator.token {
             TokenType::Minus => Ok(Literal::Number(
-                f64::downcast_from(left, binary.operator.clone())?
-                    - f64::downcast_from(right, binary.operator.clone())?,
+                f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    - f64::try_from(LiteralWithToken(right, binary.operator.clone()))?,
             )),
             TokenType::Plus => Ok(Literal::Number(
-                f64::downcast_from(left, binary.operator.clone())?
-                    + f64::downcast_from(right, binary.operator.clone())?,
+                f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    + f64::try_from(LiteralWithToken(right, binary.operator.clone()))?,
             )),
             TokenType::Slash => Ok(Literal::Number(
-                f64::downcast_from(left, binary.operator.clone())?
-                    / f64::downcast_from(right, binary.operator.clone())?,
+                f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    / f64::try_from(LiteralWithToken(right, binary.operator.clone()))?,
             )),
             TokenType::Star => Ok(Literal::Number(
-                f64::downcast_from(left, binary.operator.clone())?
-                    * f64::downcast_from(right, binary.operator.clone())?,
+                f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    * f64::try_from(LiteralWithToken(right, binary.operator.clone()))?,
             )),
             TokenType::Greater => {
-                if f64::downcast_from(left, binary.operator.clone())?
-                    > f64::downcast_from(right, binary.operator.clone())?
+                if f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    > f64::try_from(LiteralWithToken(right, binary.operator.clone()))?
                 {
                     Ok(Literal::True)
                 } else {
@@ -156,8 +158,8 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
                 }
             }
             TokenType::GreaterEqual => {
-                if f64::downcast_from(left, binary.operator.clone())?
-                    >= f64::downcast_from(right, binary.operator.clone())?
+                if f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    >= f64::try_from(LiteralWithToken(right, binary.operator.clone()))?
                 {
                     Ok(Literal::True)
                 } else {
@@ -165,8 +167,8 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
                 }
             }
             TokenType::Less => {
-                if f64::downcast_from(left, binary.operator.clone())?
-                    < f64::downcast_from(right, binary.operator.clone())?
+                if f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    < f64::try_from(LiteralWithToken(right, binary.operator.clone()))?
                 {
                     Ok(Literal::True)
                 } else {
@@ -174,8 +176,8 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
                 }
             }
             TokenType::LessEqual => {
-                if f64::downcast_from(left, binary.operator.clone())?
-                    <= f64::downcast_from(right, binary.operator.clone())?
+                if f64::try_from(LiteralWithToken(left, binary.operator.clone()))?
+                    <= f64::try_from(LiteralWithToken(right, binary.operator.clone()))?
                 {
                     Ok(Literal::True)
                 } else {
@@ -215,10 +217,10 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
         let right = self.evaluate(unary.expression.as_mut())?;
 
         match unary.operator.token {
-            TokenType::Minus => Ok(Literal::Number(f64::downcast_from(
+            TokenType::Minus => Ok(Literal::Number(f64::try_from(LiteralWithToken(
                 right,
                 unary.operator.clone(),
-            )?)),
+            ))?)),
             TokenType::Bang => Ok(Literal::negate(&right)),
             _ => Ok(Literal::Null), // unreachable
         }
