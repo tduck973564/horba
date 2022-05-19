@@ -16,10 +16,14 @@ fn main() {
     };
 }
 
+// That () in the return type should be ! but its experimental so /shrug
+// This doesn't return anything other than an Err because it exits out if it worked
 fn run_file(path: &str) -> Result<(), Box<dyn Error>> {
     let file = fs::read_to_string(path)?;
-    run(file);
-    Ok(())
+    match run(file) {
+        true => exit(1),
+        false => exit(0),
+    }
 }
 
 fn run_prompt() {
@@ -28,15 +32,17 @@ fn run_prompt() {
         let readline = rl.readline(">> ");
         match readline {
             Ok(line) if line == *".exit" => exit(0),
-            Ok(line) => run(line),
+            Ok(line) => { run(line); },
             Err(_) => println!(),
         }
     }
 }
 
-fn run(source: String) {
+fn run(source: String) -> bool {
     let mut scanner = scanner::scanner::Scanner::new(source.clone());
     let tokens = scanner.scan_tokens();
+
+    let mut exit_err = false;
 
     /*println!();
     for token in &tokens {
@@ -53,6 +59,8 @@ fn run(source: String) {
             "astprinter: {}\n",
             parser::ast_printer::AstPrinter {}.print(expression)
         )*/
-        interpreter.interpret(expression, &source).unwrap();
+        interpreter.interpret(expression, &source).unwrap_or_else(|_| { exit_err = false; () });
     }
+
+    exit_err
 }

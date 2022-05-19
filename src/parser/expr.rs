@@ -77,12 +77,13 @@ impl Literal {
         }
     }
     pub fn type_name(expr: &Literal) -> String {
+        // Do not use this to compare types, only for display 
         use Literal::*;
 
         match expr {
             Number(_) => "Number".to_string(),
             String(_) => "String".to_string(),
-            True | False => "Bool".to_string(),
+            True | False => "Bool".to_string(), 
             Null => "Null".to_string(),
         }
     }
