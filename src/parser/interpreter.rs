@@ -1,4 +1,4 @@
-use super::expr::{Expr, Visitor};
+use super::expr::{Expr, ExprVisitor};
 use super::runtime_error::RuntimeError;
 use crate::error::Error;
 use crate::error::LogLevel;
@@ -91,8 +91,7 @@ impl Interpreter {
     }
 }
 
-// TODO fix it with new TryFrom implementation
-impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
+impl ExprVisitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_grouping(&self, grouping: &mut Grouping) -> Result<Literal, RuntimeError> {
         self.evaluate(grouping.expression.as_mut())
     }
@@ -210,16 +209,5 @@ impl Visitor<Result<Literal, RuntimeError>> for Interpreter {
     fn visit_comma(&self, comma: &mut Comma) -> Result<Literal, RuntimeError> {
         self.evaluate(comma.expr.as_mut())?;
         Ok(self.evaluate(comma.next.as_mut())?)
-    }
-
-    fn visit(&mut self, expr: &mut Expr) -> Result<Literal, RuntimeError> {
-        match expr {
-            Expr::Grouping(x) => self.visit_grouping(x),
-            Expr::Binary(x) => self.visit_binary(x),
-            Expr::Literal(x) => self.visit_literal(x),
-            Expr::Unary(x) => self.visit_unary(x),
-            Expr::Ternary(x) => self.visit_ternary(x),
-            Expr::Comma(x) => self.visit_comma(x),
-        }
     }
 }

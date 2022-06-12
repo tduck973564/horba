@@ -6,6 +6,7 @@ use std::mem::discriminant;
 
 pub mod ast_printer;
 pub mod expr;
+pub mod stmt;
 pub mod interpreter;
 pub mod runtime_error;
 
@@ -32,7 +33,8 @@ impl Parser {
         }
         match self.expression() {
             Ok(x) => Some(x),
-            Err(_) => None,
+            Err(_) => None, // wtf is this????
+            // TODO
         }
     }
 

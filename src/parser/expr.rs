@@ -1,8 +1,8 @@
 use crate::scanner::token::Token;
 use std::fmt;
 
-pub trait Visitor<T> {
-    fn visit(&mut self, expr: &mut Expr) -> T {
+pub trait ExprVisitor<T> {
+    fn visit_expr(&mut self, expr: &mut Expr) -> T {
         match expr {
             Expr::Grouping(x) => self.visit_grouping(x),
             Expr::Binary(x) => self.visit_binary(x),
@@ -31,8 +31,8 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn accept<T>(&mut self, mut visitor: Box<dyn Visitor<T>>) -> T {
-        visitor.visit(self)
+    pub fn accept<T>(&mut self, mut visitor: Box<dyn ExprVisitor<T>>) -> T {
+        visitor.visit_expr(self)
     }
 }
 

@@ -5,7 +5,7 @@ use crate::scanner::token_type::TokenType;
 #[derive(Clone, Copy)]
 pub struct AstPrinter;
 
-impl expr::Visitor<String> for AstPrinter {
+impl expr::ExprVisitor<String> for AstPrinter {
     fn visit_grouping(&self, expr: &mut Grouping) -> String {
         self.parenthesize("group", vec![&mut expr.expression])
     }
